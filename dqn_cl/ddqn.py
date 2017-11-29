@@ -339,7 +339,7 @@ if __name__ == "__main__":
         tmp_agent = DQNAgent(action_size, i)
         tmp_agent.load()
         tmp_agent.train(True)
-        if sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.) <= 9.:
+        if sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.) <= 8.:
             q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
         else:
             q.append(float(1.))
@@ -382,7 +382,7 @@ if __name__ == "__main__":
             # improve = (sum(tmp_agent.successes[-(Step_size / 100):]) -
             #            sum(tmp_agent.successes[-2*(Step_size / 100):-(Step_size / 100)])) / (Step_size / 100.)
             # q.append(float(np.exp(improve)))
-            if sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.) <= 9.:
+            if sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.) <= 8.:
                 q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
             else:
                 q.append(float(1.))
