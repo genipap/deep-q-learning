@@ -24,11 +24,13 @@ __author__ = 'qzq'
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 EPISODES = 1000000
-MAX_STEP = 400
-Buffer_size = 100000
+MAX_STEP = 300
+Buffer_size = 1000000
 Safe_dis = 50.
 Safe_time = 3.
 Buffer = Replay(Buffer_size)
+Step_size = 500
+Batch_size = 128
 
 
 class DQNAgent:
@@ -40,15 +42,21 @@ class DQNAgent:
     keras.set_session(tf_sess)
     keras.set_learning_phase(1)
 
-    def __init__(self, state_size, action_size, batch_size):
-        self.state_size = state_size
-        self.action_size = action_size
+    def __init__(self, a_size, pos):
+        self.sim = InterSim(1, pos, False)
+        self.buffer = Replay(Buffer_size)
+        self.state = self.sim.get_state()
+        self.state_size = self.state.shape[1]
+        self.action_size = a_size
         self.gamma = 0.99    # discount rate
         self.epsilon = 1.0  # exploration rate
         self.tau = 0.0001
         self.epsilon_min = 0.01
         self.epsilon_decay = 1. / 100000.
         self.learning_rate = 0.001
+        self.init = pos
+
+        self.reward = Reward()
 
         self.critic_model = self._build_model()
         self.target_model = self._build_model()
@@ -68,11 +76,18 @@ class DQNAgent:
         self.sub_not_finish = 0
         self.sub_not_move = 0
 
+        self.successes = []
+        self.crashes = []
+        self.not_moves = []
+        self.not_finishes = []
+        self.total_rewards = []
+        self.loss = []
+
         self.if_done = False
 
-    def update(self, e):
+    def update(self, e, B=False):
         self.if_done = False
-        if self.epsilon > self.epsilon_min:
+        if self.epsilon > self.epsilon_min and B:
             self.epsilon -= self.epsilon_decay
         if (e + 1) % 100 == 0:
             self.sub_crash = 0
@@ -89,8 +104,8 @@ class DQNAgent:
         # model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
         S = Input(shape=[self.state_size])
         A = Input(shape=[self.action_size])
-        s0 = Dense(state_size, activation='linear')(S)
-        a0 = Dense(action_size, activation='linear')(A)
+        s0 = Dense(self.state_size, activation='linear')(S)
+        a0 = Dense(self.action_size, activation='linear')(A)
         h0 = concatenate([s0, a0])
         # h1 = Dense(128, activation='relu')(h0)
         h2 = Dense(63, activation='relu')(h0)
@@ -111,15 +126,7 @@ class DQNAgent:
 
     def act(self, s_t, if_train):
         if if_train:
-            # q1 = self.target_model.predict([s_t, -np.ones([1, 1])])
-            # q2 = self.target_model.predict([s_t, np.zeros([1, 1])])
-            # q3 = self.target_model.predict([s_t, np.ones([1, 1])])
-            # a_c = [-1., 0., 1.]
-            # a_t = a_c[np.argmax([q1, q2, q3])]
-            # if a_t == 1.:
-            #     return a_t
             zz = if_train * max(self.epsilon, self.epsilon_min)
-            # # if rule:
             if random() < zz:
                 rr = random()
                 if rr < 0.33:
@@ -173,9 +180,13 @@ class DQNAgent:
             a_t = a_c[np.argmax([q1, q2, q3])]
         return a_t
 
-    def replay(self, state, action, r, next_state, do, b_size):
+    def replay(self, state, action, r, next_state, do, b_size, update_b=False):
         Buffer.add(state, action, r, next_state, do)
-        self.batch = Buffer.get_batch(b_size)
+        if update_b:
+            self.buffer.add(state, action, r, next_state, do)
+            self.batch = self.buffer.get_batch(b_size)
+        else:
+            self.batch = Buffer.get_batch(b_size)
         self.batch_state = np.squeeze(np.asarray([x[0] for x in self.batch]), axis=1)
         self.batch_action = np.asarray([x[1] for x in self.batch])
         self.batch_reward = np.asarray([x[2] for x in self.batch])
@@ -209,26 +220,26 @@ class DQNAgent:
 
     def load(self):
         try:
-            self.critic_model.load_weights("weights/criticmodel.h5")
-            self.target_model.load_weights("weights/criticmodel.h5")
+            self.critic_model.load_weights('weights/criticmodel.h5')
+            self.target_model.load_weights('weights/criticmodel.h5')
         except:
             logging.warn("Cannot find the weight !")
 
     def save(self):
-        self.critic_model.save_weights('weights/criticmodel.h5')
-        with open("weights/criticmodel.json", "w") as outfile:
+        self.critic_model.save_weights('s' + str(self.init) + '/criticmodel.h5')
+        with open('s' + str(self.init) + '/criticmodel.json', "w") as outfile:
             json.dump(self.critic_model.to_json(), outfile)
 
     def if_exit(self, s, state, c_l, c_r, nmove, cond):
         if s >= MAX_STEP:
-            logging.warn('Not finished with max steps! Dis to SL: {0:.2f}'.format(state[4]) +
-                         ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
+            # logging.warn('Not finished with max steps! Dis to SL: {0:.2f}'.format(state[4]) +
+            #              ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
             self.sub_not_finish += 1
             self.if_done = True
         elif nmove > 0:
-            logging.warn('Not move! Dis to SL: {0:.2f}'.format(state[4]) + ', Dis to Center: {0:.2f}'.format(state[6]) +
-                         ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
-                         ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
+            # logging.warn('Not move! Dis to SL: {0:.2f}'.format(state[4]) + ', Dis to Center: {0:.2f}'.format(state[6]) +
+            #              ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
+            #              ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
             self.sub_not_move += 1
             self.if_done = True
         elif c_l > 0 or (c_r > 0):
@@ -238,106 +249,146 @@ class DQNAgent:
                 v = 'right'
             else:
                 v = 'front'
-            logging.warn('Crash to ' + v + ' vehicles! Dis to SL: {0:.2f}'.format(state[4]) +
-                         ', Dis to Center: {0:.2f}'.format(state[6]) +
-                         ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
-                         ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
+            # logging.warn('Crash to ' + v + ' vehicles! Dis to SL: {0:.2f}'.format(state[4]) +
+            #              ', Dis to Center: {0:.2f}'.format(state[6]) +
+            #              ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
+            #              ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
             self.sub_crash += 1
             self.if_done = True
         elif state[9] <= - state[2]:
-            logging.info('Congratulations! Traverse successfully. ' + cond)
+            # logging.info('Congratulations! Traverse successfully. ' + cond)
             self.sub_success += 1
             self.if_done = True
         return self.if_done, self.sub_not_finish, self.sub_not_move, self.sub_crash, self.sub_success
 
+    def train(self, B=False, train_ind=True):
+        for e in range(Step_size):
+            step = 0
+            total_reward = float(0.)
+            mean_loss = float(0.)
+            while True:
+                action_t = self.act(self.state, train_ind)
+                action_t = np.array([action_t], ndmin=2)
+                if action_t[0][0] != 1.:
+                    reward_t, collision_l, collision_r, not_move = \
+                        self.reward.get_reward(self.state[0], action_t[0][0])
+                    self.sim.update_vehicle(action_t[0][0], reward_t)
+                    state_t1 = self.sim.get_state()
+                else:
+                    while True:
+                        reward_t, collision_l, collision_r, not_move = \
+                            self.reward.get_reward(self.state[0], action_t[0][0])
+                        self.sim.update_vehicle(action_t[0][0], reward_t)
+                        state_t1 = self.sim.get_state()
+                        if self.state[0][9] <= - self.state[0][2] or (collision_l > 0):
+                            break
+                        else:
+                            self.state = state_t1
+                total_reward += reward_t
+                done, not_finish, not_move, crash, success = \
+                    self.if_exit(step, self.state[0], collision_l, collision_r, not_move, self.sim.cond)
+                if train_ind:
+                    mean_loss += (self.replay(self.state, action_t[0], reward_t, state_t1, done, Batch_size, B))
+                if train_ind:
+                    self.update_target_model()
+                if done:
+                    break
+                self.state = state_t1
+                step += 1
+            self.total_rewards.append(total_reward)
+            if train_ind:
+                self.loss.append(mean_loss / (step + 1.))
+            plt.close('all')
+            visual = False if (e + 1) % 500 == 0 else False
+            # logging.debug('Episode: ' + str(e) + ', Step: ' + str(step) + ', Reward: ' + str(total_reward) +
+            #               ', loss: {0:.2f}'.format(self.loss[-1]) + ', Success: ' + str(success))
+            if train_ind:
+                self.save()
+            if (e + 1) % 100 == 0:
+                self.successes.append(success)
+                self.crashes.append(crash)
+                self.not_moves.append(not_move)
+                self.not_finishes.append(not_finish)
+                # logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) +
+                #              ', Crash: ' + str(self.crashes) + '\nNot Finished: ' + str(self.not_finishes) +
+                #              '\nNot Move: ' + str(self.not_moves) + '\nSuccess: ' + str(self.successes))
+                results = {'crash': self.crashes, 'unfinished': self.not_finishes, 'stop': self.not_moves,
+                           'succeess': self.successes, 'reward': self.total_rewards, 'loss': self.loss}
+                with open('s' + str(self.init) + '/result.txt', 'w+') as json_file:
+                    jsoned_data = json.dumps(results)
+                    json_file.write(jsoned_data)
+                    # train_ind = False if (train_ind is True) else True
+
+            # sim = InterSim(randrange(4), visual)
+            self.if_done = False
+            self.sim = InterSim(1, self.init, visual)
+            self.state = self.sim.get_state()
+            self.update(e, B)
+
 if __name__ == "__main__":
     plt.ion()
-    # sim = InterSim(randrange(4), True)
-    sim = InterSim(1, False)
-    reward = Reward()
-    state_t = sim.get_state()
-    state_size = state_t.shape[1]
+    final_model = None
     action_size = 1
-    batch_size = 128
-    agent = DQNAgent(state_size, action_size, batch_size)
-    agent.load()
-    done = False
-    train_ind = True
 
-    loss = []
-    successes = []
-    crashes = []
-    not_moves = []
-    not_finishes = []
-    total_rewards = []
+    init_pos = [2, 1, 0, -1, -2, -3]
+    agent = []
+    q = []
     tictac = time.time()
-    action_t = -1. if random() > 0.5 else 1.
+    train_pro = []
+    for i in init_pos:
+        tmp_agent = DQNAgent(action_size, i)
+        tmp_agent.load()
+        tmp_agent.train(True)
+        if sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.) <= 9.:
+            q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
+        else:
+            q.append(float(1.))
+        agent.append(tmp_agent)
+        logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) + ', cond: ' + str(tmp_agent.sim.cond) +
+                     ', Success: ' + str(tmp_agent.successes))
 
-    for e in range(EPISODES):
-        step = 0
-        total_reward = float(0.)
-        mean_loss = float(0.)
-        # zz = train_ind * max(agent.epsilon, agent.epsilon_min)
-        # follow_rule = True if random() < zz else False
-        while True:
-            action_t = agent.act(state_t, train_ind)
-            # action_t -= 1. if mean_loss < 0.001 else 0.
-            # if len(loss) > 100 and (np.mean(loss[-100:]) < 0.01):
-            #     action_t = agent.act(state_t, follow_rule, train_ind)
-            # else:
-            #     action_t = 1.
-            action_t = np.array([action_t], ndmin=2)
-            if action_t[0][0] != 1.:
-                reward_t, collision_l, collision_r, not_move = reward.get_reward(state_t[0], action_t[0][0])
-                sim.update_vehicle(action_t[0][0], reward_t)
-                state_t1 = sim.get_state()
+    while True:
+        q_p = np.array(q) / (sum(q))
+        train_pro.append(q)
+        boltz_rand = random()
+        if boltz_rand < q_p[0]:
+            next_ind = 0
+        elif q_p[0] <= boltz_rand < sum(q_p[0:2]):
+            next_ind = 1
+        elif sum(q_p[0:2]) <= boltz_rand < sum(q_p[0:3]):
+            next_ind = 2
+        elif sum(q_p[0:3]) <= boltz_rand < sum(q_p[0:4]):
+            next_ind = 3
+        elif sum(q_p[0:4]) <= boltz_rand < sum(q_p[0:5]):
+            next_ind = 4
+        else:
+            next_ind = 5
+        strFormat = len(q_p) * '{:2.3f} '
+        logging.debug('[' + strFormat.format(*q_p) + '], ' + 'Next ind: ' + str(next_ind))
+
+        tmp_agent = agent[next_ind]
+        tmp_agent.critic_model.save_weights('weights/criticmodel.h5')
+        with open('weights/criticmodel.json', "w") as outfile:
+            json.dump(tmp_agent.critic_model.to_json(), outfile)
+        q = []
+        for k, i in enumerate(init_pos):
+            # logging.debug(str(k) + ', ' + str(i))
+            tmp_agent = agent[k]
+            tmp_agent.load()
+            if k == next_ind:
+                tmp_agent.train(True)
             else:
-                while True:
-                    reward_t, collision_l, collision_r, not_move = reward.get_reward(state_t[0], action_t[0][0])
-                    sim.update_vehicle(action_t[0][0], reward_t)
-                    state_t1 = sim.get_state()
-                    if state_t[0][9] <= - state_t[0][2] or (collision_l > 0):
-                        break
-                    else:
-                        state_t = state_t1
-            total_reward += reward_t
-            done, not_finish, not_move, crash, success = \
-                agent.if_exit(step, state_t[0], collision_l, collision_r, not_move, sim.cond)
-            if train_ind:
-                mean_loss += (agent.replay(state_t, action_t[0], reward_t, state_t1, done, batch_size))
-            if train_ind:
-                agent.update_target_model()
-            if done:
-                break
-            state_t = state_t1
-            step += 1
-        total_rewards.append(total_reward)
-        if train_ind:
-            loss.append(mean_loss / (step + 1.))
-        plt.close('all')
-        visual = False if (e + 1) % 500 == 0 else False
-        logging.debug('Episode: ' + str(e) + ', Step: ' + str(step) + ', Reward: ' + str(total_reward) +
-                      ', loss: {0:.2f}'.format(loss[-1]) + ', Success: ' + str(success))
-        if train_ind:
-            agent.save()
-        if (e + 1) % 100 == 0:
-            successes.append(success)
-            crashes.append(crash)
-            not_moves.append(not_move)
-            not_finishes.append(not_finish)
+                tmp_agent.train()
+            # improve = (sum(tmp_agent.successes[-(Step_size / 100):]) -
+            #            sum(tmp_agent.successes[-2*(Step_size / 100):-(Step_size / 100)])) / (Step_size / 100.)
+            # q.append(float(np.exp(improve)))
+            if sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.) <= 9.:
+                q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
+            else:
+                q.append(float(1.))
+            agent[k] = tmp_agent
             logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) +
-                         ', Crash: ' + str(crashes) + '\nNot Finished: ' + str(not_finishes) +
-                         '\nNot Move: ' + str(not_moves) + '\nSuccess: ' + str(successes))
-            results = {'crash': crashes, 'unfinished': not_finishes, 'stop': not_moves, 'succeess': successes,
-                       'reward': total_rewards, 'loss': loss}
-            with open('vehicle1-1.txt', 'w+') as json_file:
-                jsoned_data = json.dumps(results)
-                json_file.write(jsoned_data)
-            # train_ind = False if (train_ind is True) else True
-
-        # if len(loss) > 100 and (np.mean(loss[-100:]) < 0.01):
-        #     break
-        # sim = InterSim(randrange(4), visual)
-        sim = InterSim(1, visual)
-        state_t = sim.get_state()
-        agent.update(e)
+                         ', cond: ' + str(tmp_agent.sim.cond) + ', Success: ' + str(tmp_agent.successes))
+        with open('train_pro.txt', 'w+') as json_file:
+            jsoned_data = json.dumps(train_pro)
+            json_file.write(jsoned_data)
