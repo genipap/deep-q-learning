@@ -14,7 +14,7 @@ Resolution = 2. * np.pi / Lidar_NO
 Lidar_len_Max = 50.
 Lidar_len_step = 0.1
 Visibility = 80.
-Focus_No = 3
+Focus_No = 1
 
 
 class InterSim(object):
@@ -40,8 +40,8 @@ class InterSim(object):
         self.Visual = visual
         self.gamma = gamma
         self.av_pos = dict()
-        # self.av_pos['y'] = self.Stop_Line + 0.5 * random()
-        self.av_pos['y'] = self.Inter_Low - 0.05
+        self.av_pos['y'] = self.Stop_Line + random() - 0.5
+        # self.av_pos['y'] = self.Inter_Low - 0.05
         self.Start_Pos = self.av_pos['y']
         self.av_pos['x'] = 2. + random() - 0.5
         self.av_pos['vx'] = 0.
@@ -99,7 +99,7 @@ class InterSim(object):
             self.cond = str(lb)
             lv_locs = np.array(sample(xrange(lb - self.LV_NO, lb), self.LV_NO))
             rv_locs = np.array(sample(xrange(-9, -1), self.RV_NO))
-            lv_locs = 10. * np.array(sorted(lv_locs, reverse=True)) + 2. * random() - 1.
+            lv_locs = 10. * np.array(sorted(lv_locs, reverse=True)) + 8. * random() - 4.
             rv_locs = 10. * np.array(sorted(rv_locs)) + 2. * random() - 1.
         elif gamma == 10:
             self.LV_NO = randint(3, 4)

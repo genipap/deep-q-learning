@@ -24,7 +24,7 @@ __author__ = 'qzq'
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 EPISODES = 1000000
-MAX_STEP = 400
+MAX_STEP = 300
 Buffer_size = 100000
 Safe_dis = 50.
 Safe_time = 3.
@@ -221,14 +221,14 @@ class DQNAgent:
 
     def if_exit(self, s, state, c_l, c_r, nmove, cond):
         if s >= MAX_STEP:
-            logging.warn('Not finished with max steps! Dis to SL: {0:.2f}'.format(state[4]) +
-                         ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
+            # logging.warn('Not finished with max steps! Dis to SL: {0:.2f}'.format(state[4]) +
+            #              ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
             self.sub_not_finish += 1
             self.if_done = True
         elif nmove > 0:
-            logging.warn('Not move! Dis to SL: {0:.2f}'.format(state[4]) + ', Dis to Center: {0:.2f}'.format(state[6]) +
-                         ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
-                         ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
+            # logging.warn('Not move! Dis to SL: {0:.2f}'.format(state[4]) + ', Dis to Center: {0:.2f}'.format(state[6]) +
+            #              ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
+            #              ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
             self.sub_not_move += 1
             self.if_done = True
         elif c_l > 0 or (c_r > 0):
@@ -238,14 +238,14 @@ class DQNAgent:
                 v = 'right'
             else:
                 v = 'front'
-            logging.warn('Crash to ' + v + ' vehicles! Dis to SL: {0:.2f}'.format(state[4]) +
-                         ', Dis to Center: {0:.2f}'.format(state[6]) +
-                         ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
-                         ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
+            # logging.warn('Crash to ' + v + ' vehicles! Dis to SL: {0:.2f}'.format(state[4]) +
+            #              ', Dis to Center: {0:.2f}'.format(state[6]) +
+            #              ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
+            #              ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
             self.sub_crash += 1
             self.if_done = True
         elif state[9] <= - state[2]:
-            logging.info('Congratulations! Traverse successfully. ' + cond)
+            # logging.info('Congratulations! Traverse successfully. ' + cond)
             self.sub_success += 1
             self.if_done = True
         return self.if_done, self.sub_not_finish, self.sub_not_move, self.sub_crash, self.sub_success
@@ -253,7 +253,7 @@ class DQNAgent:
 if __name__ == "__main__":
     plt.ion()
     # sim = InterSim(randrange(4), True)
-    sim = InterSim(1, False)
+    sim = InterSim(1, True)
     reward = Reward()
     state_t = sim.get_state()
     state_size = state_t.shape[1]
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     agent = DQNAgent(state_size, action_size, batch_size)
     agent.load()
     done = False
-    train_ind = True
+    train_ind = False
 
     loss = []
     successes = []
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     not_finishes = []
     total_rewards = []
     tictac = time.time()
-    action_t = -1. if random() > 0.5 else 1.
+    # action_t = -1. if random() > 0.5 else 1.
 
     for e in range(EPISODES):
         step = 0
@@ -315,9 +315,9 @@ if __name__ == "__main__":
         if train_ind:
             loss.append(mean_loss / (step + 1.))
         plt.close('all')
-        visual = False if (e + 1) % 500 == 0 else False
-        logging.debug('Episode: ' + str(e) + ', Step: ' + str(step) + ', Reward: ' + str(total_reward) +
-                      ', loss: {0:.2f}'.format(loss[-1]) + ', Success: ' + str(success))
+        visual = False if (e + 1) % 500 == 0 else True
+        # logging.debug('Episode: ' + str(e) + ', Step: ' + str(step) + ', Reward: ' + str(total_reward) +
+        #               ', loss: {0:.2f}'.format(loss[-1]) + ', Success: ' + str(success))
         if train_ind:
             agent.save()
         if (e + 1) % 100 == 0:
@@ -325,14 +325,15 @@ if __name__ == "__main__":
             crashes.append(crash)
             not_moves.append(not_move)
             not_finishes.append(not_finish)
-            logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) +
-                         ', Crash: ' + str(crashes) + '\nNot Finished: ' + str(not_finishes) +
-                         '\nNot Move: ' + str(not_moves) + '\nSuccess: ' + str(successes))
-            results = {'crash': crashes, 'unfinished': not_finishes, 'stop': not_moves, 'succeess': successes,
-                       'reward': total_rewards, 'loss': loss}
-            with open('vehicle1-1.txt', 'w+') as json_file:
-                jsoned_data = json.dumps(results)
-                json_file.write(jsoned_data)
+            # logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) +
+            #              ', Crash: ' + str(crashes) + '\nNot Finished: ' + str(not_finishes) +
+            #              '\nNot Move: ' + str(not_moves) + '\nSuccess: ' + str(successes))
+            # results = {'crash': crashes, 'unfinished': not_finishes, 'stop': not_moves, 'succeess': successes,
+            #            'reward': total_rewards, 'loss': loss}
+            # with open('vehicle1-2.txt', 'w+') as json_file:
+            #     jsoned_data = json.dumps(results)
+            #     json_file.write(jsoned_data)
+
             # train_ind = False if (train_ind is True) else True
 
         # if len(loss) > 100 and (np.mean(loss[-100:]) < 0.01):

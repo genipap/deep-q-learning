@@ -10,13 +10,13 @@ __author__ = 'qzq'
 a = 0
 if a == 0:
     # file_name = 'ddqn1'
-    file_name = 'vehicle1-1'
+    file_name = 'vehicle1-2'
     with open(file_name + '.txt', 'r') as json_file:
         results = json.load(json_file)
     correct_key = {'crash', 'stop', 'succeess'}
 else:
     # file_name = 'ch_rule2_2'
-    # file_name = 'ch_rule_g1_2'
+    # file_name = ' ch_rule_g1_2'
     # file_name = 'ch_rule_g1_4'
     # file_name = 'ch_rule_g1_5'
     file_name = 'new3'
@@ -74,13 +74,14 @@ plt.title('critic loss: {0:.2f}'.format(np.mean(train_loss[-100:])))
 # plt.ylim([0, 5 * 1e22])
 # # plt.xlim([0, 1000])
 # plt.plot(np.arange(total_ep), train_loss, 'r', label='loss')
-# plt.ylim([0, 1000])
+plt.ylim([0, 200])
 plt.plot(train_loss, 'r', label='loss')
 # plt.legend(loc=1)
 plt.subplot(312)
 plt.title('reward: {0:.2f}'.format(np.mean(train_re[-100:])))
 plt.plot(train_re, 'y.', label='reward')
 plt.subplot(313)
+plt.title('Success rate every 100 epochs')
 plt.plot(results['succeess'], 'b', label='success')
 # '4h to 100%'
 # # # plt.ylim([-5000, 1000])

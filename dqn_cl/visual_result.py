@@ -15,6 +15,7 @@ file_name3 = 's0/result'
 file_name4 = 's-1/result'
 file_name5 = 's-2/result'
 file_name6 = 's-3/result'
+
 with open(file_name1 + '.txt', 'r') as json_file:
     results1 = json.load(json_file)
 with open(file_name2 + '.txt', 'r') as json_file:
@@ -82,12 +83,12 @@ train_re6 = np.reshape(results6['reward'], (len(results6['reward']), 1))[:, 0]
 # # fig1.savefig('../results/' + file_name + '_1.png', dpi=fig1.dpi)
 
 fig2 = plt.figure(2)
-plt.subplot(311)
+plt.subplot(211)
 plt.title('critic loss: {0:.2f}'.format(np.mean(train_loss1[-100:])))
 # plt.ylim([0, 5 * 1e22])
 # # plt.xlim([0, 1000])
 # plt.plot(np.arange(total_ep), train_loss, 'r', label='loss')
-# plt.ylim([0, 1000])
+plt.ylim([-100, 5000])
 plt.plot(train_loss1, label='2')
 plt.plot(train_loss2, label='1')
 plt.plot(train_loss3, label='0')
@@ -95,16 +96,24 @@ plt.plot(train_loss4, label='-1')
 plt.plot(train_loss5, label='-2')
 plt.plot(train_loss6, label='-3')
 plt.legend(loc=1)
-plt.subplot(312)
-plt.title('reward: {0:.2f}'.format(np.mean(train_re1[-100:])))
-plt.plot(train_re1, '.', label='2')
-plt.plot(train_re2, '.', label='1')
-plt.plot(train_re3, '.', label='0')
-plt.plot(train_re4, '.', label='-1')
-plt.plot(train_re5, '.', label='-2')
-plt.plot(train_re6, '.', label='-3')
-plt.legend(loc=1)
-plt.subplot(313)
+# plt.subplot(312)
+# plt.title('reward: {0:.2f}'.format(np.mean(train_re1[-100:])))
+# plt.plot(train_re1, '.', label='2')
+# plt.plot(train_re2, '.', label='1')
+# plt.plot(train_re3, '.', label='0')
+# plt.plot(train_re4, '.', label='-1')
+# plt.plot(train_re5, '.', label='-2')
+# plt.plot(train_re6, '.', label='-3')
+# plt.legend(loc=1)
+plt.subplot(212)
+plt.title('Success rate every 100 epochs')
+plt.ylim([-1, 101])
+# plt.plot(np.mean(np.reshape(results1['succeess'], (len(results1['succeess'])/5, 5)), axis=1), '.-', label='2')
+# plt.plot(np.mean(np.reshape(results2['succeess'], (len(results2['succeess'])/5, 5)), axis=1), '.-', label='2')
+# plt.plot(np.mean(np.reshape(results3['succeess'], (len(results3['succeess'])/5, 5)), axis=1), '.-', label='2')
+# plt.plot(np.mean(np.reshape(results4['succeess'], (len(results4['succeess'])/5, 5)), axis=1), '.-', label='2')
+# plt.plot(np.mean(np.reshape(results5['succeess'], (len(results5['succeess'])/5, 5)), axis=1), '.-', label='2')
+# plt.plot(np.mean(np.reshape(results6['succeess'], (len(results6['succeess'])/5, 5)), axis=1), '.-', label='2')
 plt.plot(results1['succeess'], '.-', label='2')
 plt.plot(results2['succeess'], '.-', label='1')
 plt.plot(results3['succeess'], '.-', label='0')
@@ -131,7 +140,7 @@ plt.legend(loc=1)
 #
 
 
-file_name = 'train_pro'
+file_name = 'train_pro4'
 with open(file_name + '.txt', 'r') as json_file:
     train_pro = json.load(json_file)
 train_pro = np.array(train_pro)
@@ -140,6 +149,7 @@ sump = np.array(sump, ndmin=2).T
 pp = np.divide(train_pro, sump)
 fig3 = plt.figure(3)
 plt.subplot(111)
+plt.ylim([-0.1, 1.1])
 for i in range(pp.shape[1]):
     plt.plot(pp[:, i], '.-', label=str(ll[i]))
 plt.legend(loc=1)

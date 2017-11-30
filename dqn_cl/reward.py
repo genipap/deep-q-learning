@@ -8,7 +8,7 @@ Safe_time = 3.
 Tho_dis = 50.
 Tho_time = 3.
 Visibility = 80.
-Focus_No = 3
+Focus_No = 1
 
 
 class Reward(object):
@@ -52,7 +52,7 @@ class Reward(object):
                 return -101., c_l, 0, 0
         else:
             if c_l <= 0:
-                if self.state[-8] <= -3. and (self.state[-2] <= -3.) and (self.state[1] == -1.):
+                if self.state[-2-2*Focus_No] <= -3. and (self.state[-2] <= -3.) and (self.state[1] == -1.):
                     return -101., 0, 0, 1
                 else:
                     return -1., 0, 0, 0

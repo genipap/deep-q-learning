@@ -25,7 +25,7 @@ __author__ = 'qzq'
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 EPISODES = 1000000
 MAX_STEP = 300
-Buffer_size = 1000000
+Buffer_size = 100000
 Safe_dis = 50.
 Safe_time = 3.
 Buffer = Replay(Buffer_size)
@@ -44,7 +44,7 @@ class DQNAgent:
 
     def __init__(self, a_size, pos):
         self.sim = InterSim(1, pos, False)
-        self.buffer = Replay(Buffer_size)
+        # self.buffer = Replay(Buffer_size)
         self.state = self.sim.get_state()
         self.state_size = self.state.shape[1]
         self.action_size = a_size
@@ -128,21 +128,21 @@ class DQNAgent:
         if if_train:
             zz = if_train * max(self.epsilon, self.epsilon_min)
             if random() < zz:
-                rr = random()
-                if rr < 0.33:
-                    a_t = 1.
-                else:
-                    a_t = 0. if (random() > 0.67) else -1.
-                # left = s_t[0][15:25]
-                # dis_l = left[::2]
-                # dis_a_l = dis_l >= Safe_dis
-                # dis_b_l = dis_l < 0.
-                # disl_ = np.array([dis_a_l, dis_b_l])
-                # t_l = left[1::2]
-                # t_a_l = t_l >= Safe_time
-                # t_b_l = t_l < 0.
-                # tl_ = np.array([t_a_l, t_b_l])
-                # right = s_t[0][25:]
+                #     rr = random()
+                #     if rr < 0.33:
+                #         a_t = 1.
+                #     else:
+                #         a_t = 0. if (random() > 0.67) else -1.
+                left = s_t[0][15:17]
+                dis_l = left[::2]
+                dis_a_l = dis_l >= Safe_dis
+                dis_b_l = dis_l < 0.
+                disl_ = np.array([dis_a_l, dis_b_l])
+                t_l = left[1::2]
+                t_a_l = t_l >= Safe_time
+                t_b_l = t_l < 0.
+                tl_ = np.array([t_a_l, t_b_l])
+                # right = s_t[0][17:]
                 # dis_r = right[::2]
                 # dis_a_r = dis_r >= Safe_dis
                 # dis_b_r = dis_r < 0.
@@ -151,15 +151,17 @@ class DQNAgent:
                 # t_a_r = t_r >= Safe_time
                 # t_b_r = t_r < 0.
                 # tr_ = np.array([t_a_r, t_b_r])
-                # if np.any(disl_, axis=0).all() and np.any(tl_, axis=0).all():
-                #     if s_t[0][5] > 0.05:
-                #         a_t = 0. if (random() > 0.5) else -1.
-                #     else:
-                #         a_t = 0. if (random() > 0.5) else 1.
-                # elif s_t[0][5] > 0.05:
-                #     a_t = 0. if (random() > 0.5) else -1.
-                # else:
-                #     a_t = -1.
+                if np.any(disl_, axis=0).all() and np.any(tl_, axis=0).all():
+                    if s_t[0][5] > 0.05:
+                        a_t = 0. # if (random() > 0.2) else 1.
+                    else:
+                        a_t = 0. if (random() > 0.5) else 1.
+                elif s_t[0][5] > 0.05:
+                    a_t = 0. if (random() > 0.5) else -1.
+                elif s_t[0][5] < 0.:
+                    a_t = 1.
+                else:
+                    a_t = -1.
             # elif random() < zz:
             #     rr = random()
             #     if rr < 0.33:
@@ -182,11 +184,11 @@ class DQNAgent:
 
     def replay(self, state, action, r, next_state, do, b_size, update_b=False):
         Buffer.add(state, action, r, next_state, do)
-        if update_b:
-            self.buffer.add(state, action, r, next_state, do)
-            self.batch = self.buffer.get_batch(b_size)
-        else:
-            self.batch = Buffer.get_batch(b_size)
+        # if update_b:
+            # self.buffer.add(state, action, r, next_state, do)
+            # self.batch = self.buffer.get_batch(b_size)
+        # else:
+        self.batch = Buffer.get_batch(b_size)
         self.batch_state = np.squeeze(np.asarray([x[0] for x in self.batch]), axis=1)
         self.batch_action = np.asarray([x[1] for x in self.batch])
         self.batch_reward = np.asarray([x[2] for x in self.batch])
@@ -261,7 +263,7 @@ class DQNAgent:
             self.if_done = True
         return self.if_done, self.sub_not_finish, self.sub_not_move, self.sub_crash, self.sub_success
 
-    def train(self, B=False, train_ind=True):
+    def train(self, B=False, train_ind=False):
         for e in range(Step_size):
             step = 0
             total_reward = float(0.)
@@ -338,11 +340,11 @@ if __name__ == "__main__":
     for i in init_pos:
         tmp_agent = DQNAgent(action_size, i)
         tmp_agent.load()
-        tmp_agent.train(True)
-        if sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.) <= 8.:
-            q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
-        else:
-            q.append(float(1.))
+        tmp_agent.train(True, True)
+        # if sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.) <= 9.:
+        q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
+        # else:
+        #     q.append(float(np.exp(-10.)))
         agent.append(tmp_agent)
         logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) + ', cond: ' + str(tmp_agent.sim.cond) +
                      ', Success: ' + str(tmp_agent.successes))
@@ -350,6 +352,10 @@ if __name__ == "__main__":
     while True:
         q_p = np.array(q) / (sum(q))
         train_pro.append(q)
+        with open('train_pro4.txt', 'w+') as json_file:
+            jsoned_data = json.dumps(train_pro)
+            json_file.write(jsoned_data)
+
         boltz_rand = random()
         if boltz_rand < q_p[0]:
             next_ind = 0
@@ -376,19 +382,20 @@ if __name__ == "__main__":
             tmp_agent = agent[k]
             tmp_agent.load()
             if k == next_ind:
-                tmp_agent.train(True)
+                tmp_agent.train(True, True)
             else:
                 tmp_agent.train()
-            # improve = (sum(tmp_agent.successes[-(Step_size / 100):]) -
-            #            sum(tmp_agent.successes[-2*(Step_size / 100):-(Step_size / 100)])) / (Step_size / 100.)
             # q.append(float(np.exp(improve)))
-            if sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.) <= 8.:
-                q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
+            if sum(tmp_agent.successes[-(Step_size / 50):]) / (Step_size / 5.) <= 8.:
+                improve = (sum(tmp_agent.successes[-(Step_size / 100):]) -
+                           sum(tmp_agent.successes[-2 * (Step_size / 100):-(Step_size / 100)])) / (Step_size / 100.)
+                q.append(float(np.exp(abs(improve))))
+                # q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
+                # q[next_ind] = float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.)))
             else:
-                q.append(float(1.))
+                q.append(float(np.exp(-10.)))
+                # q[next_ind] = float(np.exp(-10.))
             agent[k] = tmp_agent
             logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) +
                          ', cond: ' + str(tmp_agent.sim.cond) + ', Success: ' + str(tmp_agent.successes))
-        with open('train_pro.txt', 'w+') as json_file:
-            jsoned_data = json.dumps(train_pro)
-            json_file.write(jsoned_data)
+
