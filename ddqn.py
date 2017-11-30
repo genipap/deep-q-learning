@@ -325,14 +325,14 @@ if __name__ == "__main__":
             crashes.append(crash)
             not_moves.append(not_move)
             not_finishes.append(not_finish)
-            # logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) +
-            #              ', Crash: ' + str(crashes) + '\nNot Finished: ' + str(not_finishes) +
-            #              '\nNot Move: ' + str(not_moves) + '\nSuccess: ' + str(successes))
-            # results = {'crash': crashes, 'unfinished': not_finishes, 'stop': not_moves, 'succeess': successes,
-            #            'reward': total_rewards, 'loss': loss}
-            # with open('vehicle1-2.txt', 'w+') as json_file:
-            #     jsoned_data = json.dumps(results)
-            #     json_file.write(jsoned_data)
+            logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) +
+                         ', Crash: ' + str(crashes) + '\nNot Finished: ' + str(not_finishes) +
+                         '\nNot Move: ' + str(not_moves) + '\nSuccess: ' + str(successes))
+            results = {'crash': crashes, 'unfinished': not_finishes, 'stop': not_moves, 'succeess': successes,
+                       'reward': total_rewards, 'loss': loss}
+            with open('vehicle_random.txt', 'w+') as json_file:
+                jsoned_data = json.dumps(results)
+                json_file.write(jsoned_data)
 
             # train_ind = False if (train_ind is True) else True
 
