@@ -253,7 +253,7 @@ class DQNAgent:
 if __name__ == "__main__":
     plt.ion()
     # sim = InterSim(randrange(4), True)
-    sim = InterSim(1, True)
+    sim = InterSim(1, False)
     reward = Reward()
     state_t = sim.get_state()
     state_size = state_t.shape[1]
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     agent = DQNAgent(state_size, action_size, batch_size)
     agent.load()
     done = False
-    train_ind = False
+    train_ind = True
 
     loss = []
     successes = []
@@ -315,7 +315,7 @@ if __name__ == "__main__":
         if train_ind:
             loss.append(mean_loss / (step + 1.))
         plt.close('all')
-        visual = False if (e + 1) % 500 == 0 else True
+        visual = False if (e + 1) % 500 == 0 else False
         # logging.debug('Episode: ' + str(e) + ', Step: ' + str(step) + ', Reward: ' + str(total_reward) +
         #               ', loss: {0:.2f}'.format(loss[-1]) + ', Success: ' + str(success))
         if train_ind:
