@@ -305,77 +305,77 @@ if __name__ == '__main__':
         tmp_agent = ReinAcc(140*random() + 10., 9)
         tmp_agent.launch_train(1)
 
-    alpha = 0.1
-    task_pos = [10., 40., 70., 100, 130.]
-    tictac = time.time()
-    train_pro = []
-    agents = []
-    q = []
-    q_exp = []
-    for k, i in enumerate(task_pos):
-        pos = i + 30. * random()
-        tmp_agent = ReinAcc(pos, k)
-        tmp_agent.launch_train(1)
-        agents.append(tmp_agent)
-        q.append(sum(tmp_agent.total_rewards[-Step_size:]) / Step_size / 1000.)
-        q_exp.append(float(np.exp(q[-1])))
-        logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) + ', cond: ' + str(k) +
-                     ', Success: ' + str(tmp_agent.success))
-
-    while True:
-        q_p = np.array(q_exp) / (sum(q_exp))
-        train_pro.append(q_exp)
-        with open('train_pro.txt', 'w+') as json_file:
-            jsoned_data = json.dumps(train_pro)
-            json_file.write(jsoned_data)
-
-        boltz_rand = random()
-        if boltz_rand < q_p[0]:
-            next_ind = 0
-        elif q_p[0] <= boltz_rand < sum(q_p[0:2]):
-            next_ind = 1
-        elif sum(q_p[0:2]) <= boltz_rand < sum(q_p[0:3]):
-            next_ind = 2
-        elif sum(q_p[0:3]) <= boltz_rand < sum(q_p[0:4]):
-            next_ind = 3
-        else:
-            next_ind = 4
-        strFormat = len(q_p) * '{:2.3f} '
-        logging.debug('[' + strFormat.format(*q_p) + '], ' + 'Next ind: ' + str(next_ind))
-
-        tmp_agent = agents[next_ind]
-        tmp_agent.app_actor.model.save_weights("weights/actormodel.h5", overwrite=True)
-        with open("weights/actormodel.json", "w") as outfile:
-            json.dump(tmp_agent.app_actor.model.to_json(), outfile)
-            tmp_agent.app_critic.model.save_weights("weights/criticmodel.h5", overwrite=True)
-        with open("weights/criticmodel.json", "w") as outfile:
-            json.dump(tmp_agent.app_critic.model.to_json(), outfile)
-
-        old_q = q
-        q = []
-        q_exp = []
-        for k, i in enumerate(task_pos):
-            # logging.debug(str(k) + ', ' + str(i))
-            tmp_agent = agents[k]
-            if k == next_ind:
-                tmp_agent.launch_train(1)
-            else:
-                tmp_agent.launch_train(0)
-            # q.append(float(np.exp(improve)))
-            if sum(tmp_agent.success[-(Step_size / 50):]) / (Step_size / 5.) <= 8.0:
-                # improve = (sum(tmp_agent.successes[-(Step_size / 100):]) -
-                #            sum(tmp_agent.successes[-2 * (Step_size / 100):-(Step_size / 100)])) / (Step_size / 50.)
-                # q.append(float(np.exp(abs(improve))))
-                qq = alpha * sum(tmp_agent.total_rewards[-Step_size:]) / Step_size / 1000. + \
-                     (1 - alpha) * old_q[k]
-                q.append(qq)
-                q_exp.append(float(np.exp(qq)))
-                # q[next_ind] = float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.)))
-            else:
-                qq = - alpha * 10. + (1 - alpha) * old_q[k]
-                q_exp.append(float(np.exp(qq)))
-                # q[next_ind] = float(np.exp(-10.))
-            agents[k] = tmp_agent
-            logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) +
-                         ', cond: ' + str(k) + ', Success: ' + str(tmp_agent.success))
-
+    # alpha = 0.1
+    # task_pos = [10., 40., 70., 100, 130.]
+    # tictac = time.time()
+    # train_pro = []
+    # agents = []
+    # q = []
+    # q_exp = []
+    # for k, i in enumerate(task_pos):
+    #     pos = i + 30. * random()
+    #     tmp_agent = ReinAcc(pos, k)
+    #     tmp_agent.launch_train(1)
+    #     agents.append(tmp_agent)
+    #     q.append(sum(tmp_agent.total_rewards[-Step_size:]) / Step_size / 1000.)
+    #     q_exp.append(float(np.exp(q[-1])))
+    #     logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) + ', cond: ' + str(k) +
+    #                  ', Success: ' + str(tmp_agent.success))
+    #
+    # while True:
+    #     q_p = np.array(q_exp) / (sum(q_exp))
+    #     train_pro.append(q_exp)
+    #     with open('train_pro.txt', 'w+') as json_file:
+    #         jsoned_data = json.dumps(train_pro)
+    #         json_file.write(jsoned_data)
+    #
+    #     boltz_rand = random()
+    #     if boltz_rand < q_p[0]:
+    #         next_ind = 0
+    #     elif q_p[0] <= boltz_rand < sum(q_p[0:2]):
+    #         next_ind = 1
+    #     elif sum(q_p[0:2]) <= boltz_rand < sum(q_p[0:3]):
+    #         next_ind = 2
+    #     elif sum(q_p[0:3]) <= boltz_rand < sum(q_p[0:4]):
+    #         next_ind = 3
+    #     else:
+    #         next_ind = 4
+    #     strFormat = len(q_p) * '{:2.3f} '
+    #     logging.debug('[' + strFormat.format(*q_p) + '], ' + 'Next ind: ' + str(next_ind))
+    #
+    #     tmp_agent = agents[next_ind]
+    #     tmp_agent.app_actor.model.save_weights("weights/actormodel.h5", overwrite=True)
+    #     with open("weights/actormodel.json", "w") as outfile:
+    #         json.dump(tmp_agent.app_actor.model.to_json(), outfile)
+    #         tmp_agent.app_critic.model.save_weights("weights/criticmodel.h5", overwrite=True)
+    #     with open("weights/criticmodel.json", "w") as outfile:
+    #         json.dump(tmp_agent.app_critic.model.to_json(), outfile)
+    #
+    #     old_q = q
+    #     q = []
+    #     q_exp = []
+    #     for k, i in enumerate(task_pos):
+    #         # logging.debug(str(k) + ', ' + str(i))
+    #         tmp_agent = agents[k]
+    #         if k == next_ind:
+    #             tmp_agent.launch_train(1)
+    #         else:
+    #             tmp_agent.launch_train(0)
+    #         # q.append(float(np.exp(improve)))
+    #         if sum(tmp_agent.success[-(Step_size / 50):]) / (Step_size / 5.) <= 8.0:
+    #             # improve = (sum(tmp_agent.successes[-(Step_size / 100):]) -
+    #             #            sum(tmp_agent.successes[-2 * (Step_size / 100):-(Step_size / 100)])) / (Step_size / 50.)
+    #             # q.append(float(np.exp(abs(improve))))
+    #             qq = alpha * sum(tmp_agent.total_rewards[-Step_size:]) / Step_size / 1000. + \
+    #                  (1 - alpha) * old_q[k]
+    #             q.append(qq)
+    #             q_exp.append(float(np.exp(qq)))
+    #             # q[next_ind] = float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.)))
+    #         else:
+    #             qq = - alpha * 10. + (1 - alpha) * old_q[k]
+    #             q_exp.append(float(np.exp(qq)))
+    #             # q[next_ind] = float(np.exp(-10.))
+    #         agents[k] = tmp_agent
+    #         logging.info('Time: {0:.2f}'.format((time.time() - tictac) / 3600.) +
+    #                      ', cond: ' + str(k) + ', Success: ' + str(tmp_agent.success))
+    #

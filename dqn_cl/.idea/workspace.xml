@@ -55,8 +55,8 @@
       <file leaf-file-name="approach.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/../ddpg_cl/approach.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="110">
-              <caret line="306" column="0" lean-forward="true" selection-start-line="306" selection-start-column="0" selection-end-line="306" selection-end-column="0" />
+            <state relative-caret-position="566">
+              <caret line="381" column="0" lean-forward="true" selection-start-line="307" selection-start-column="0" selection-end-line="381" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -162,8 +162,8 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="1979" />
-    <option name="y" value="-4" />
+    <option name="x" value="59" />
+    <option name="y" value="-1084" />
     <option name="width" value="1861" />
     <option name="height" value="1084" />
   </component>
@@ -350,7 +350,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1979" y="-4" width="1861" height="1084" extended-state="6" />
+    <frame x="59" y="-1084" width="1861" height="1084" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.12341598" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -583,8 +583,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/../ddpg_cl/approach.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="110">
-          <caret line="306" column="0" lean-forward="true" selection-start-line="306" selection-start-column="0" selection-end-line="306" selection-end-column="0" />
+        <state relative-caret-position="566">
+          <caret line="381" column="0" lean-forward="true" selection-start-line="307" selection-start-column="0" selection-end-line="381" selection-end-column="0" />
           <folding />
         </state>
       </provider>
