@@ -128,20 +128,20 @@ class DQNAgent:
         if if_train:
             zz = if_train * max(self.epsilon, self.epsilon_min)
             if random() < zz:
-                #     rr = random()
-                #     if rr < 0.33:
-                #         a_t = 1.
-                #     else:
-                #         a_t = 0. if (random() > 0.67) else -1.
-                left = s_t[0][15:17]
-                dis_l = left[::2]
-                dis_a_l = dis_l >= Safe_dis
-                dis_b_l = dis_l < 0.
-                disl_ = np.array([dis_a_l, dis_b_l])
-                t_l = left[1::2]
-                t_a_l = t_l >= Safe_time
-                t_b_l = t_l < 0.
-                tl_ = np.array([t_a_l, t_b_l])
+                rr = random()
+                if rr < 0.33:
+                    a_t = 1.
+                else:
+                    a_t = 0. if (random() > 0.67) else -1.
+                # left = s_t[0][15:17]
+                # dis_l = left[::2]
+                # dis_a_l = dis_l >= Safe_dis
+                # dis_b_l = dis_l < 0.
+                # disl_ = np.array([dis_a_l, dis_b_l])
+                # t_l = left[1::2]
+                # t_a_l = t_l >= Safe_time
+                # t_b_l = t_l < 0.
+                # tl_ = np.array([t_a_l, t_b_l])
                 # right = s_t[0][17:]
                 # dis_r = right[::2]
                 # dis_a_r = dis_r >= Safe_dis
@@ -151,17 +151,17 @@ class DQNAgent:
                 # t_a_r = t_r >= Safe_time
                 # t_b_r = t_r < 0.
                 # tr_ = np.array([t_a_r, t_b_r])
-                if np.any(disl_, axis=0).all() and np.any(tl_, axis=0).all():
-                    if s_t[0][5] > 0.05:
-                        a_t = 0. # if (random() > 0.2) else 1.
-                    else:
-                        a_t = 0. if (random() > 0.5) else 1.
-                elif s_t[0][5] > 0.05:
-                    a_t = 0. if (random() > 0.5) else -1.
-                elif s_t[0][5] < 0.:
-                    a_t = 1.
-                else:
-                    a_t = -1.
+                # if np.any(disl_, axis=0).all() and np.any(tl_, axis=0).all():
+                #     if s_t[0][13] > -10.:
+                #         a_t = 0.  # if (random() > 0.2) else 1.
+                #     else:
+                #         a_t = 0. if (random() > 0.5) else 1.
+                # elif s_t[0][5] > 0.1:
+                #     a_t = 0. if (random() > 0.2) else -1.
+                # elif s_t[0][5] < 0.:
+                #     a_t = 1.
+                # else:
+                #     a_t = -1.
             # elif random() < zz:
             #     rr = random()
             #     if rr < 0.33:
@@ -169,15 +169,15 @@ class DQNAgent:
             #     else:
             #         a_t = 0. if (random() > 0.67) else -1.
             else:
-                q1 = self.target_model.predict([s_t, -np.ones([1, 1])])
-                q2 = self.target_model.predict([s_t, np.zeros([1, 1])])
-                q3 = self.target_model.predict([s_t, np.ones([1, 1])])
+                q1 = self.critic_model.predict([s_t, -np.ones([1, 1])])
+                q2 = self.critic_model.predict([s_t, np.zeros([1, 1])])
+                q3 = self.critic_model.predict([s_t, np.ones([1, 1])])
                 a_c = [-1., 0., 1.]
                 a_t = a_c[np.argmax([q1, q2, q3])]
         else:
-            q1 = self.target_model.predict([s_t, -np.ones([1, 1])])
-            q2 = self.target_model.predict([s_t, np.zeros([1, 1])])
-            q3 = self.target_model.predict([s_t, np.ones([1, 1])])
+            q1 = self.critic_model.predict([s_t, -np.ones([1, 1])])
+            q2 = self.critic_model.predict([s_t, np.zeros([1, 1])])
+            q3 = self.critic_model.predict([s_t, np.ones([1, 1])])
             a_c = [-1., 0., 1.]
             a_t = a_c[np.argmax([q1, q2, q3])]
         return a_t
@@ -300,6 +300,8 @@ class DQNAgent:
             self.total_rewards.append(total_reward)
             if train_ind:
                 self.loss.append(mean_loss / (step + 1.))
+            else:
+                self.loss.append(0.)
             plt.close('all')
             visual = False if (e + 1) % 500 == 0 else False
             # logging.debug('Episode: ' + str(e) + ', Step: ' + str(step) + ', Reward: ' + str(total_reward) +
@@ -352,7 +354,7 @@ if __name__ == "__main__":
     while True:
         q_p = np.array(q) / (sum(q))
         train_pro.append(q)
-        with open('train_pro4.txt', 'w+') as json_file:
+        with open('train_pro5.txt', 'w+') as json_file:
             jsoned_data = json.dumps(train_pro)
             json_file.write(jsoned_data)
 
@@ -386,11 +388,11 @@ if __name__ == "__main__":
             else:
                 tmp_agent.train()
             # q.append(float(np.exp(improve)))
-            if sum(tmp_agent.successes[-(Step_size / 50):]) / (Step_size / 5.) <= 8.:
-                improve = (sum(tmp_agent.successes[-(Step_size / 100):]) -
-                           sum(tmp_agent.successes[-2 * (Step_size / 100):-(Step_size / 100)])) / (Step_size / 100.)
-                q.append(float(np.exp(abs(improve))))
-                # q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
+            if sum(tmp_agent.successes[-(Step_size / 50):]) / (Step_size / 5.) <= 8.0:
+                # improve = (sum(tmp_agent.successes[-(Step_size / 100):]) -
+                #            sum(tmp_agent.successes[-2 * (Step_size / 100):-(Step_size / 100)])) / (Step_size / 50.)
+                # q.append(float(np.exp(abs(improve))))
+                q.append(float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.))))
                 # q[next_ind] = float(np.exp(sum(tmp_agent.successes[-(Step_size / 100):]) / (Step_size / 10.)))
             else:
                 q.append(float(np.exp(-10.)))

@@ -40,8 +40,8 @@ class InterSim(object):
         self.Visual = visual
         self.gamma = gamma
         self.av_pos = dict()
-        self.av_pos['y'] = self.Stop_Line + random() - 0.5
-        # self.av_pos['y'] = self.Inter_Low - 0.05
+        # self.av_pos['y'] = self.Stop_Line + random() - 0.5
+        self.av_pos['y'] = self.Inter_Low - random()*0.1
         self.Start_Pos = self.av_pos['y']
         self.av_pos['x'] = 2. + random() - 0.5
         self.av_pos['vx'] = 0.

@@ -221,14 +221,14 @@ class DQNAgent:
 
     def if_exit(self, s, state, c_l, c_r, nmove, cond):
         if s >= MAX_STEP:
-            # logging.warn('Not finished with max steps! Dis to SL: {0:.2f}'.format(state[4]) +
-            #              ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
+            logging.warn('Not finished with max steps! Dis to SL: {0:.2f}'.format(state[4]) +
+                         ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
             self.sub_not_finish += 1
             self.if_done = True
         elif nmove > 0:
-            # logging.warn('Not move! Dis to SL: {0:.2f}'.format(state[4]) + ', Dis to Center: {0:.2f}'.format(state[6]) +
-            #              ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
-            #              ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
+            logging.warn('Not move! Dis to SL: {0:.2f}'.format(state[4]) + ', Dis to Center: {0:.2f}'.format(state[6]) +
+                         ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
+                         ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
             self.sub_not_move += 1
             self.if_done = True
         elif c_l > 0 or (c_r > 0):
@@ -238,14 +238,14 @@ class DQNAgent:
                 v = 'right'
             else:
                 v = 'front'
-            # logging.warn('Crash to ' + v + ' vehicles! Dis to SL: {0:.2f}'.format(state[4]) +
-            #              ', Dis to Center: {0:.2f}'.format(state[6]) +
-            #              ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
-            #              ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
+            logging.warn('Crash to ' + v + ' vehicles! Dis to SL: {0:.2f}'.format(state[4]) +
+                         ', Dis to Center: {0:.2f}'.format(state[6]) +
+                         ', Dis to hv: [{0:.2f}, {1:.2f}]'.format(state[-8], state[-2]) +
+                         ', Velocity: {0:.2f}'.format(state[0]) + ', ' + cond)
             self.sub_crash += 1
             self.if_done = True
         elif state[9] <= - state[2]:
-            # logging.info('Congratulations! Traverse successfully. ' + cond)
+            logging.info('Congratulations! Traverse successfully. ' + cond)
             self.sub_success += 1
             self.if_done = True
         return self.if_done, self.sub_not_finish, self.sub_not_move, self.sub_crash, self.sub_success
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     agent = DQNAgent(state_size, action_size, batch_size)
     agent.load()
     done = False
-    train_ind = True
+    train_ind = False
 
     loss = []
     successes = []
@@ -315,7 +315,7 @@ if __name__ == "__main__":
         if train_ind:
             loss.append(mean_loss / (step + 1.))
         plt.close('all')
-        visual = False if (e + 1) % 500 == 0 else False
+        visual = False if (e + 1) % 500 == 0 else True
         # logging.debug('Episode: ' + str(e) + ', Step: ' + str(step) + ', Reward: ' + str(total_reward) +
         #               ', loss: {0:.2f}'.format(loss[-1]) + ', Success: ' + str(success))
         if train_ind:

@@ -91,8 +91,8 @@ class InterSim(object):
         elif gamma == 1:
             self.LV_NO = 1
             self.RV_NO = 2
-            lb = randint(-3, 2)
-            # lb = 0
+            # lb = randint(-3, 2)
+            lb = 1
             rb = randint(0, 1)
             # self.LV_NO = randint(5, 8)
             # self.RV_NO = randint(5, 8)
